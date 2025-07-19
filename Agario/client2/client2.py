@@ -1,11 +1,13 @@
-import pygame
-import random
-from socket import*
-from threading import Thread
+import pygame # імпортуємо бібліотеку pygame
+import random # імпортуємо модулб рандом
+from socket import* # імпортуємо socket
+from threading import Thread # імпортуємо необхідну функцію із модуля Threading 
 
+# створюємо клієнта
 client = socket(AF_INET, SOCK_STREAM)
-client.connect(("4.tcp.eu.ngrok.io", 19143))
+client.connect(("localhost", 2707)) # з'єднуємо клієнта з  хостом та портом
 
+# отримаємо дані про себе від клієнта
 msg = client.recv(1024).decode()
 msg = msg.split(",")
 my_id = int(msg[0])
@@ -14,11 +16,13 @@ my_y = int(msg[2])
 my_radius = int(msg[3])
 print(my_id, my_x, my_y, my_radius)
 
+# активуємо pygame
 pygame.init()
 
-w, h = 1000, 600
+w, h = 1000, 600 # ширина та висота єкрана
 username = " "
 
+# створюємо клас Ball
 class Ball():
     def __init__(self, x, y, color, radius):
         self.x = x
@@ -49,9 +53,10 @@ def load_level_map ():
         enemies.append(food)
     return enemies
 
-enemies2 = []
+enemies2 = [] # список інших гравців
+# прийом повдомлень від сервера
 def receive_msg():
-    global enemies2
+    global enemies2 # робимо список глобальним
 
     while 1:
         try:
@@ -67,24 +72,29 @@ def receive_msg():
                 enemies2.append([enemy_id, enemy_x, enemy_y, enemy_radius])
         except:
             pass
+# створюємо поток
 Thread(target=receive_msg).start()
 
+# створюємо ігрове вікно
 window = pygame.display.set_mode((w, h))
 
-ball = Ball(450, 250, (255, 0, 0), 1000)
+ball = Ball(450, 250, (255, 0, 0), my_radius) # наш гравець
 lvl = load_level_map()
 
 clock = pygame.time.Clock()
 run = True
+# ігровий цикл
 while run:
     window.fill((255, 255, 255))
     keys = pygame.key.get_pressed()
     for food in lvl:
-        if ball.rect.colliderect(food):
-            lvl.remove(food)
-            my_radius += 1
-        else:
-            food.draw_1()
+        for el in food:
+            if ball.rect.colliderect(el):
+                food.remove(el)
+                my_radius += 1
+            else:
+                el.draw_1()
+        food.draw_1()
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             run = False
@@ -123,7 +133,6 @@ while run:
     window.blit(user_text, ((w / 2) - 40, (h / 2)-20 ))
 
     for element in enemies2:
-        if element[0] == msg[0]: continue
         sx = int((element[1] - my_x) + w // 2)
         sy = int((element[2] - my_y) + h // 2)
         enemy = Ball(sx, sy, (0, 0, 0), element[3])
