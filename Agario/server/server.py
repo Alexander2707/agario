@@ -25,6 +25,14 @@ def receive_msg():
                 player_x = int(msg[1])
                 player_y = int(msg[2])
                 player_radius = int(msg[3])
+                players[conn] = {
+                    "id": player_id,
+                    "x": player_x,
+                    "y": player_y,
+                    "radius": player_radius,
+                    "name": None
+                }
+                
             except:
                 pass
             packet = ''
