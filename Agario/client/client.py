@@ -1,3 +1,5 @@
+nickname = input("nickname: ")
+
 import pygame # імпортуємо бібліотеку pygame
 import random # імпортуємо модулб рандом
 from socket import* # імпортуємо socket
@@ -5,7 +7,7 @@ from threading import Thread # імпортуємо необхідну функ�
 
 # створюємо клієнта
 client = socket(AF_INET, SOCK_STREAM)
-client.connect(("localhost", 2707)) # з'єднуємо клієнта з  хостом та портом
+client.connect(("192.168.0.110", 8081)) # з'єднуємо клієнта з  хостом та портом
 
 # отримаємо дані про себе від клієнта
 msg = client.recv(1024).decode()
@@ -20,7 +22,6 @@ print(my_id, my_x, my_y, my_radius)
 pygame.init()
 
 w, h = 1000, 600 # ширина та висота єкрана
-username = " "
 
 # створюємо клас Ball
 class Ball():
@@ -36,11 +37,12 @@ class Ball():
     def draw_1(self):
         pygame.draw.circle(window, self.color, (self.rect.x+self.radius, self.rect.y+self.radius), self.radius)
 
-    # def draw_2(self):
-    #     pygame.draw.circle(window, self.color, (self.rect.x+self.radius, self.rect.y+self.radius), self.radius)
-    #     font1 = pygame.font.Font("minecraft_0.ttf", 18)
-    #     text = font1.render(nickname, True, (0, 0, 0))
-    #     window.blit(text, (460, 280))
+    def draw_2(self, nickname, font_color=(0,0,0)):
+        self.rect = pygame.Rect(self.x, self.y, self.radius*2, self.radius*2)
+        pygame.draw.circle(window, self.color, (self.rect.x+self.radius, self.rect.y+self.radius), self.radius)
+        font1 = pygame.font.Font(None, 20)
+        text = font1.render(nickname, True, font_color)
+        window.blit(text, (self.rect.x + 10, self.rect.y + 10))
 
 run2 = True
 foods = list()
@@ -65,7 +67,8 @@ def receive_msg():
                 enemy_x = int(data_enemy_txt[1])
                 enemy_y = int(data_enemy_txt[2])
                 enemy_radius = int(data_enemy_txt[3])
-                enemies.append([enemy_id, enemy_x, enemy_y, enemy_radius])
+                enemy_name = data_enemy_txt[4]
+                enemies.append([enemy_id, enemy_x, enemy_y, enemy_radius, enemy_name])
         except:
             pass
 # створюємо поток
@@ -85,6 +88,8 @@ while run:
         if ball.rect.colliderect(f):
             foods.remove(f)
             ball.radius += 1
+            ball.x -=1
+            ball.y -=1
         else:
             f.draw_1()
     for e in pygame.event.get():
@@ -92,11 +97,11 @@ while run:
             run = False
             run2 = False
             pygame.quit()
-        if e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_BACKSPACE:
-                username = username[0 : -1]
-            else: 
-                username += e.unicode
+        # if e.type == pygame.KEYDOWN:
+            # if e.key == pygame.K_BACKSPACE:
+            #     nickname = nickname[0 : -1]
+            # else: 
+            #     nickname += e.unicode
 
     if keys[pygame.K_LEFT]:
         for food in foods:
@@ -114,17 +119,13 @@ while run:
         for food in foods:
             food.rect.y -= 5
         my_y += 5
-    ball.draw_1()
+    ball.draw_2(nickname)
 
     try:
         msg_for_server = f"{my_id}, {my_x}, {my_y}, {ball.radius}"
         client.send(msg_for_server.encode())
     except:
         pass
-    
-    font1 = pygame.font.Font("minecraft_0.ttf", 16)
-    user_text = font1.render(username, True, (255,255,255))
-    window.blit(user_text, ((w / 2) - 40, (h / 2)-20 ))
 
     for element in enemies:
         sx = int((element[1] - my_x) + w // 2)
@@ -133,11 +134,13 @@ while run:
         if ball.rect.colliderect(enemy1):
             if ball.radius < enemy1.radius:
                 enemy1.draw_1()
-                run = False
-                run2 = False
+                lose_bg = pygame.transform.scale(pygame.image.load('lose_img.jpg'), (200, 100))
+                window.blit(lose_bg, (0, 0))
+                # run = False
+                # run2 = False
                 pygame.quit()
         else:
-            enemy1.draw_1()
+            enemy1.draw_2(element[4], (255, 255, 255))
 
     pygame.display.update()
     clock.tick(60)

@@ -25,12 +25,13 @@ def receive_msg():
                 player_x = int(msg[1])
                 player_y = int(msg[2])
                 player_radius = int(msg[3])
+                player_name = msg[4]
                 players[conn] = {
                     "id": player_id,
                     "x": player_x,
                     "y": player_y,
                     "radius": player_radius,
-                    "name": None
+                    "name": player_name
                 }
                 
             except:
@@ -39,7 +40,7 @@ def receive_msg():
             try:
                 for c, p in players.items():
                     if c!=conn:
-                        line = f"{p['id']},{p['x']},{p['y']},{p['radius']}"
+                        line = f"{p['id']},{p['x']},{p['y']},{p['radius'],},{p['name'],}"
                         packet += line + "|"
                 conn.send(packet.encode())
             except:
